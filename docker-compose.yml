@@ -1,0 +1,13 @@
+services:
+  webapi:
+    image: ${DOCKER_REGISTRY-}webapi
+    build:
+      context: .
+      dockerfile: webapi/Dockerfile
+
+  webapplication1:
+    image: ${DOCKER_REGISTRY-}webapplication1
+    build:
+      context: .
+      dockerfile: WebApplication1/Dockerfile
+
