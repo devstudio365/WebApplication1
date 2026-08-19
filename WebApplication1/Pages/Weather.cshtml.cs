@@ -3,15 +3,14 @@ using System.Net.Http.Json;
 
 namespace WebApplication1.Pages
 {
-    public class WeatherModel(IHttpClientFactory httpClientFactory, IConfiguration configuration) : PageModel
+    public class WeatherModel(IHttpClientFactory httpClientFactory) : PageModel
     {
         public List<WeatherForecast> Forecasts { get; set; } = [];
 
         public async Task OnGetAsync()
         {
-            var baseUrl = configuration["WeatherApi:BaseUrl"];
-            var client = httpClientFactory.CreateClient();
-            var result = await client.GetFromJsonAsync<List<WeatherForecast>>($"{baseUrl}/WeatherForecast");
+            var client = httpClientFactory.CreateClient("Api");
+            var result = await client.GetFromJsonAsync<List<WeatherForecast>>("/WeatherForecast");
 
             if (result is not null)
             {

@@ -2,7 +2,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("Api", (sp, client) =>
+{
+    var baseUrl = sp.GetRequiredService<IConfiguration>()["ApiBaseUrl"];
+    client.BaseAddress = new Uri(baseUrl!);
+});
 
 var app = builder.Build();
 
