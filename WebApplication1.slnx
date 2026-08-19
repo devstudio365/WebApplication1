@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Info.txt" />
+    <File Path="publish-acr.ps1" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="webapi/webapi.csproj" Id="2109b747-abf1-49ca-8ca9-c1fb730fab4c" />
   <Project Path="WebApplication1/WebApplication1.csproj" />
 </Solution>

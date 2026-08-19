@@ -1,0 +1,6 @@
+//to login to azure container registries, and deploy to both webapi and webapp, 
+//open the terminal (developer powershell) - View - > termina
+//the copy this enter line and run it in the terminal window
+//if for any reason the login fails, we will have to login again using the following command FIRST: az login --tenant 48c2004d-dc6f-4841-b869-b980d45f2bed
+//to find my tenant id, go to portal.azure.com at the search box at the top search for Microsoft Entra ID. click on the first result returned
+.\publish-acr.ps1
