@@ -4,10 +4,3 @@
 //if for any reason the login fails, we will have to login again using the following command FIRST: az login --tenant 48c2004d-dc6f-4841-b869-b980d45f2bed
 //to find my tenant id, go to portal.azure.com at the search box at the top search for Microsoft Entra ID. click on the first result returned
 .\publish-acr.ps1
-
-
-
-//21 aug 2026
-//to run the main.bicep file manually
-//in powershell window run
-az deployment sub create --name "webapplication1-infra-deploy" --location polandcentral --template-file infra/main.bicep

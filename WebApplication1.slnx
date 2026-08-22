@@ -1,16 +1,4 @@
 <Solution>
-  <Folder Name="/infra/">
-    <File Path="infra/main.bicep" />
-  </Folder>
-  <Folder Name="/infra/modules/">
-    <File Path="infra/modules/acr-role-assignments.bicep" />
-    <File Path="infra/modules/existing-acr.bicep" />
-    <File Path="infra/modules/existing-production.bicep" />
-    <File Path="infra/modules/existing-sql.bicep" />
-    <File Path="infra/modules/existing-webapi.bicep" />
-    <File Path="infra/modules/keyvault.bicep" />
-    <File Path="infra/modules/staging.bicep" />
-  </Folder>
   <Folder Name="/Solution Items/">
     <File Path="Info.txt" />
     <File Path="publish-acr.ps1" />
