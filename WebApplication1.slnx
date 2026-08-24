@@ -7,6 +7,18 @@
     <File Path=".github/workflows/build-and-push.yml" />
     <File Path=".github/workflows/ci.yml" />
   </Folder>
+  <Folder Name="/infra/">
+    <File Path="infra/main.bicep" />
+  </Folder>
+  <Folder Name="/infra/modules/">
+    <File Path="infra/modules/acr-role-assignments.bicep" />
+    <File Path="infra/modules/existing-acr.bicep" />
+    <File Path="infra/modules/existing-production.bicep" />
+    <File Path="infra/modules/existing-sql.bicep" />
+    <File Path="infra/modules/existing-webapi.bicep" />
+    <File Path="infra/modules/keyvault.bicep" />
+    <File Path="infra/modules/staging.bicep" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
