@@ -2,6 +2,8 @@
   <Folder Name="/Solution Items/">
     <File Path="Info.txt" />
     <File Path="publish-acr.ps1" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/ci.yml" />
   </Folder>
   <Project Path="docker-compose.dcproj">
