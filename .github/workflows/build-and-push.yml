@@ -39,3 +39,17 @@ jobs:
 
       - name: Push web image
         run: docker push $ACR_LOGIN_SERVER/webapp:${{ github.sha }}
+
+      - name: Deploy web to staging
+        run: |
+          az webapp config container set \
+            --name web-webapplication1-staging \
+            --resource-group rg-webapplication1-staging \
+            --container-image-name $ACR_LOGIN_SERVER/webapp:${{ github.sha }}
+
+      - name: Deploy webapi to staging
+        run: |
+          az webapp config container set \
+            --name webapi-webapplication1-staging \
+            --resource-group rg-webapplication1-staging \
+            --container-image-name $ACR_LOGIN_SERVER/webapi:${{ github.sha }}
