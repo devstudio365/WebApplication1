@@ -73,6 +73,14 @@ resource webapiStaging 'Microsoft.Web/sites@2022-03-01' = {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
           value: 'false'
         }
+        {
+          // Real value is intentionally NOT stored here — this pulls the
+          // staging connection string from the Key Vault secret created in
+          // Phase 3, using webapiStaging's own managed identity (already
+          // granted Key Vault Secrets User on that specific secret).
+          name: 'ConnectionStrings__DefaultConnection'
+          value: '@Microsoft.KeyVault(SecretUri=https://kv-webapp1-avwyklhwnltoi.vault.azure.net/secrets/StagingDbConnectionString/)'
+        }
       ]
     }
   }
