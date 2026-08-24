@@ -6,6 +6,7 @@
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
+  <Project Path="webapi.Tests/webapi.Tests.csproj" Id="c8fc14c1-5290-4d29-b182-6cc989609903" />
   <Project Path="webapi/webapi.csproj" Id="2109b747-abf1-49ca-8ca9-c1fb730fab4c" />
   <Project Path="WebApplication1/WebApplication1.csproj" />
 </Solution>
