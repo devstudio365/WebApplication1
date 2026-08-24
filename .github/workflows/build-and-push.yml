@@ -26,7 +26,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Log in to ACR
-        run: az acr login --name devstudio35
+        run: az acr login --name devstudio35 --resource-group DefaultResourceGroup-NEU
 
       - name: Build webapi image
         run: docker build -f webapi/Dockerfile -t $ACR_LOGIN_SERVER/webapi:${{ github.sha }} .
