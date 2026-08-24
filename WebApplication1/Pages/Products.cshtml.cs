@@ -3,18 +3,18 @@ using System.Net.Http.Json;
 
 namespace WebApplication1.Pages
 {
-    public class WeatherModel(IHttpClientFactory httpClientFactory) : PageModel
+    public class ProductsModel(IHttpClientFactory httpClientFactory) : PageModel
     {
-        public List<WeatherForecast> Forecasts { get; set; } = [];
+        public List<Product> Products { get; set; } = [];
 
         public async Task OnGetAsync()
         {
             var client = httpClientFactory.CreateClient("Api");
-            var result = await client.GetFromJsonAsync<List<WeatherForecast>>("/WeatherForecast");
+            var result = await client.GetFromJsonAsync<List<Product>>("/Products");
 
             if (result is not null)
             {
-                Forecasts = result;
+                Products = result;
             }
         }
     }
