@@ -19,6 +19,13 @@
     <File Path="infra/modules/keyvault.bicep" />
     <File Path="infra/modules/staging.bicep" />
   </Folder>
+  <Folder Name="/infra/disaster-recovery/">
+    <File Path="infra/disaster-recovery/acr-access.bicep" />
+    <File Path="infra/disaster-recovery/acr.bicep" />
+    <File Path="infra/disaster-recovery/main.bicep" />
+    <File Path="infra/disaster-recovery/production-web.bicep" />
+    <File Path="infra/disaster-recovery/production-webapi.bicep" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
