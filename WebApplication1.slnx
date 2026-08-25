@@ -6,6 +6,7 @@
   <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/build-and-push.yml" />
     <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/test-sql-connectivity.yml" />
   </Folder>
   <Folder Name="/infra/">
     <File Path="infra/main.bicep" />
@@ -26,6 +27,7 @@
     <File Path="infra/disaster-recovery/production-web.bicep" />
     <File Path="infra/disaster-recovery/production-webapi.bicep" />
   </Folder>
+  <Project Path="DbMigrator/DbMigrator.csproj" Id="6c1531b1-55f1-4c6a-8fad-cb915157b5a8" />
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
