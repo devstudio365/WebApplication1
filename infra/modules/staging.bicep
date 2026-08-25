@@ -7,9 +7,39 @@ param location string
 @description('Login server of the existing ACR, e.g. devstudio35.azurecr.io.')
 param acrLoginServer string
 
+@description('The image currently deployed to web-webapplication1-staging, read from the live resource so redeploying infrastructure never resets what the pipeline last deployed.')
+param currentWebLinuxFxVersion string
+
+@description('The image currently deployed to webapi-webapplication1-staging, same reasoning as above.')
+param currentWebapiLinuxFxVersion string
+
 var planName = 'asp-webapplication1-staging'
 var webStagingName = 'web-webapplication1-staging'
 var webapiStagingName = 'webapi-webapplication1-staging'
+
+// Log Analytics Workspace is a required prerequisite for the modern
+// "workspace-based" Application Insights — free for the first 5GB/month of
+// data ingested, which a low-traffic staging environment won't come close to.
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: 'law-webapplication1-staging'
+  location: location
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+  }
+}
+
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: 'appi-webapplication1-staging'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalytics.id
+  }
+}
 
 resource plan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: planName
@@ -33,7 +63,7 @@ resource webStaging 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: plan.id
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${acrLoginServer}/webapp:latest'
+      linuxFxVersion: currentWebLinuxFxVersion
       acrUseManagedIdentityCreds: true
       appSettings: [
         {
@@ -47,6 +77,10 @@ resource webStaging 'Microsoft.Web/sites@2022-03-01' = {
         {
           name: 'ApiBaseUrl'
           value: 'https://${webapiStagingName}.azurewebsites.net'
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: appInsights.properties.ConnectionString
         }
       ]
     }
@@ -62,7 +96,7 @@ resource webapiStaging 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: plan.id
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${acrLoginServer}/webapi:latest'
+      linuxFxVersion: currentWebapiLinuxFxVersion
       acrUseManagedIdentityCreds: true
       appSettings: [
         {
@@ -80,6 +114,10 @@ resource webapiStaging 'Microsoft.Web/sites@2022-03-01' = {
           // granted Key Vault Secrets User on that specific secret).
           name: 'ConnectionStrings__DefaultConnection'
           value: '@Microsoft.KeyVault(SecretUri=https://kv-webapp1-avwyklhwnltoi.vault.azure.net/secrets/StagingDbConnectionString/)'
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: appInsights.properties.ConnectionString
         }
       ]
     }
