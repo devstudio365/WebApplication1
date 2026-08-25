@@ -28,6 +28,9 @@ jobs:
       - name: Log in to ACR
         run: az acr login --name devstudio35 --resource-group DefaultResourceGroup-NEU
 
+      - name: Run database migrations (staging)
+        run: dotnet run --project DbMigrator --configuration Release -- kv-webapp1-avwyklhwnltoi StagingDbConnectionString
+
       - name: Build webapi image
         run: docker build -f webapi/Dockerfile -t $ACR_LOGIN_SERVER/webapi:${{ github.sha }} .
 
