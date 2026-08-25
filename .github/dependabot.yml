@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # .NET / NuGet packages across the whole solution (webapi, WebApplication1,
+  # webapi.Tests, DbMigrator all get picked up from this one root entry).
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  # The versions of actions used inside our own workflow files
+  # (actions/checkout, azure/login, etc.) — easy to forget, just as worth
+  # keeping current as NuGet packages.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
