@@ -1,0 +1,106 @@
+name: Deploy to Production
+
+# Triggers automatically once "Build and Push Images" finishes successfully,
+# but the job below immediately pauses for manual approval because of the
+# `environment: production` line — nothing actually happens until a human
+# clicks approve.
+on:
+  workflow_run:
+    workflows: ["Build and Push Images"]
+    types: [completed]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-production:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      ACR_LOGIN_SERVER: devstudio35-hvejakg9fuhngyct.azurecr.io
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+      SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Captured BEFORE any deployment, so we have something to roll back to
+      # if either health check fails below.
+      - name: Capture current production images (for rollback)
+        run: |
+          WEB_CURRENT=$(az webapp config show -g DefaultResourceGroup-NEU -n web --query linuxFxVersion -o tsv | sed 's/^DOCKER|//')
+          echo "WEB_PREVIOUS=$WEB_CURRENT" >> "$GITHUB_ENV"
+
+          WEBAPI_CURRENT=$(az rest --method get \
+            --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
+            --query "properties.image" -o tsv)
+          echo "WEBAPI_PREVIOUS=$WEBAPI_CURRENT" >> "$GITHUB_ENV"
+
+      - name: Run database migrations (production)
+        run: dotnet run --project DbMigrator --configuration Release -- kv-webapp1-avwyklhwnltoi ProductionDbConnectionString
+
+      - name: Deploy web to production
+        run: |
+          az webapp config container set \
+            --name web \
+            --resource-group DefaultResourceGroup-NEU \
+            --container-image-name $ACR_LOGIN_SERVER/webapp:$DEPLOY_SHA
+
+      - name: Health check web (production)
+        id: health_web
+        continue-on-error: true
+        run: |
+          curl -f --retry 10 --retry-delay 10 --retry-connrefused \
+            https://docably.co.uk/
+
+      - name: Rollback web on failure
+        if: steps.health_web.outcome == 'failure'
+        run: |
+          az webapp config container set \
+            --name web \
+            --resource-group DefaultResourceGroup-NEU \
+            --container-image-name "$WEB_PREVIOUS"
+
+      - name: Stop if web health check failed
+        if: steps.health_web.outcome == 'failure'
+        run: |
+          echo "Web health check failed — rolled back to the previous image. Stopping before touching webapi."
+          exit 1
+
+      # devstudio365-webapi uses the newer "Site Containers" feature, not the
+      # classic DOCKER| format web uses — so it needs a different update
+      # mechanism (a direct ARM PATCH), not `az webapp config container set`.
+      - name: Deploy webapi to production
+        run: |
+          az rest --method patch \
+            --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
+            --body "{\"properties\":{\"image\":\"$ACR_LOGIN_SERVER/webapi:$DEPLOY_SHA\"}}"
+
+      - name: Health check webapi (production)
+        id: health_webapi
+        continue-on-error: true
+        run: |
+          curl -f --retry 10 --retry-delay 10 --retry-connrefused \
+            https://api.docably.co.uk/products
+
+      - name: Rollback webapi on failure
+        if: steps.health_webapi.outcome == 'failure'
+        run: |
+          az rest --method patch \
+            --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
+            --body "{\"properties\":{\"image\":\"$WEBAPI_PREVIOUS\"}}"
+
+      - name: Stop if webapi health check failed
+        if: steps.health_webapi.outcome == 'failure'
+        run: exit 1
