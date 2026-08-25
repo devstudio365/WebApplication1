@@ -6,7 +6,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    # Version updates paused: set back to a positive number (e.g. 10) when
+    # the team wants Dependabot opening PRs again.
+    open-pull-requests-limit: 0
 
   # The versions of actions used inside our own workflow files
   # (actions/checkout, azure/login, etc.) — easy to forget, just as worth
@@ -15,4 +17,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    # Version updates paused: set back to a positive number (e.g. 10) when
+    # the team wants Dependabot opening PRs again.
+    open-pull-requests-limit: 0
