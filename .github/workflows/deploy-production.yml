@@ -51,31 +51,38 @@ jobs:
         run: dotnet run --project DbMigrator --configuration Release -- kv-webapp1-avwyklhwnltoi ProductionDbConnectionString
 
       - name: Deploy web to production
+        id: deploy_web
+        continue-on-error: true
         run: |
           az webapp config container set \
             --name web \
             --resource-group DefaultResourceGroup-NEU \
             --container-image-name $ACR_LOGIN_SERVER/webapp:$DEPLOY_SHA
 
+      # Only actually worth checking if the deploy command itself succeeded —
+      # if it didn't, there's nothing new running to check the health of.
       - name: Health check web (production)
         id: health_web
+        if: steps.deploy_web.outcome == 'success'
         continue-on-error: true
         run: |
           curl -f --retry 10 --retry-delay 10 --retry-connrefused \
             https://docably.co.uk/
 
+      # Triggers on EITHER failure mode: the deploy command itself failing,
+      # or the deploy succeeding but the app not coming up healthy.
       - name: Rollback web on failure
-        if: steps.health_web.outcome == 'failure'
+        if: steps.deploy_web.outcome == 'failure' || steps.health_web.outcome == 'failure'
         run: |
           az webapp config container set \
             --name web \
             --resource-group DefaultResourceGroup-NEU \
             --container-image-name "$WEB_PREVIOUS"
 
-      - name: Stop if web health check failed
-        if: steps.health_web.outcome == 'failure'
+      - name: Stop if web deploy or health check failed
+        if: steps.deploy_web.outcome == 'failure' || steps.health_web.outcome == 'failure'
         run: |
-          echo "Web health check failed — rolled back to the previous image. Stopping before touching webapi."
+          echo "Web deploy or health check failed — rolled back to the previous image. Stopping before touching webapi."
           exit 1
 
       # devstudio365-webapi uses the newer "Site Containers" feature, not the
@@ -86,6 +93,8 @@ jobs:
       # others would be wiped out. authType/targetPort/isMain/identity are
       # fixed and confirmed correct; only "image" actually changes here.
       - name: Deploy webapi to production
+        id: deploy_webapi
+        continue-on-error: true
         run: |
           az rest --method put \
             --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
@@ -93,18 +102,19 @@ jobs:
 
       - name: Health check webapi (production)
         id: health_webapi
+        if: steps.deploy_webapi.outcome == 'success'
         continue-on-error: true
         run: |
           curl -f --retry 10 --retry-delay 10 --retry-connrefused \
             https://api.docably.co.uk/products
 
       - name: Rollback webapi on failure
-        if: steps.health_webapi.outcome == 'failure'
+        if: steps.deploy_webapi.outcome == 'failure' || steps.health_webapi.outcome == 'failure'
         run: |
           az rest --method put \
             --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
             --body "{\"properties\":{\"image\":\"$WEBAPI_PREVIOUS\",\"isMain\":true,\"targetPort\":\"8080\",\"authType\":\"UserAssigned\",\"userManagedIdentityClientId\":\"bfca0881-a405-4aee-b564-8b3bd55a32b4\",\"inheritAppSettingsAndConnectionStrings\":true}}"
 
-      - name: Stop if webapi health check failed
-        if: steps.health_webapi.outcome == 'failure'
+      - name: Stop if webapi deploy or health check failed
+        if: steps.deploy_webapi.outcome == 'failure' || steps.health_webapi.outcome == 'failure'
         run: exit 1
