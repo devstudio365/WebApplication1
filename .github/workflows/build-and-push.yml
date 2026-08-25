@@ -16,7 +16,7 @@ jobs:
       ACR_LOGIN_SERVER: devstudio35-hvejakg9fuhngyct.azurecr.io
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Log in to Azure
         uses: azure/login@v2
