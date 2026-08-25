@@ -50,9 +50,19 @@ jobs:
             --resource-group rg-webapplication1-staging \
             --container-image-name $ACR_LOGIN_SERVER/webapp:${{ github.sha }}
 
+      - name: Health check web (staging)
+        run: |
+          curl -f --retry 10 --retry-delay 10 --retry-connrefused \
+            https://web-webapplication1-staging.azurewebsites.net/
+
       - name: Deploy webapi to staging
         run: |
           az webapp config container set \
             --name webapi-webapplication1-staging \
             --resource-group rg-webapplication1-staging \
             --container-image-name $ACR_LOGIN_SERVER/webapi:${{ github.sha }}
+
+      - name: Health check webapi (staging)
+        run: |
+          curl -f --retry 10 --retry-delay 10 --retry-connrefused \
+            https://webapi-webapplication1-staging.azurewebsites.net/products
