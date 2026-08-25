@@ -1,0 +1,14 @@
+name: Test SQL MI Connectivity
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: TCP check against SQL MI public endpoint (port 3342)
+        run: |
+          timeout 10 bash -c "echo > /dev/tcp/free-sql-mi-1029307.663ee86452a3.database.windows.net/3342" \
+            && echo "REACHABLE: port 3342 accepted a TCP connection" \
+            || echo "NOT REACHABLE: could not open a TCP connection to port 3342"
