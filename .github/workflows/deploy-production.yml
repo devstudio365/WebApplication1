@@ -80,12 +80,16 @@ jobs:
 
       # devstudio365-webapi uses the newer "Site Containers" feature, not the
       # classic DOCKER| format web uses — so it needs a different update
-      # mechanism (a direct ARM PATCH), not `az webapp config container set`.
+      # mechanism (a direct ARM call), not `az webapp config container set`.
+      # This resource only supports PUT (full replace), not PATCH — so every
+      # property must be included, not just the changed one, otherwise the
+      # others would be wiped out. authType/targetPort/isMain/identity are
+      # fixed and confirmed correct; only "image" actually changes here.
       - name: Deploy webapi to production
         run: |
-          az rest --method patch \
+          az rest --method put \
             --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
-            --body "{\"properties\":{\"image\":\"$ACR_LOGIN_SERVER/webapi:$DEPLOY_SHA\"}}"
+            --body "{\"properties\":{\"image\":\"$ACR_LOGIN_SERVER/webapi:$DEPLOY_SHA\",\"isMain\":true,\"targetPort\":\"8080\",\"authType\":\"UserAssigned\",\"userManagedIdentityClientId\":\"bfca0881-a405-4aee-b564-8b3bd55a32b4\",\"inheritAppSettingsAndConnectionStrings\":true}}"
 
       - name: Health check webapi (production)
         id: health_webapi
@@ -97,9 +101,9 @@ jobs:
       - name: Rollback webapi on failure
         if: steps.health_webapi.outcome == 'failure'
         run: |
-          az rest --method patch \
+          az rest --method put \
             --url "https://management.azure.com/subscriptions/$SUBSCRIPTION_ID/resourceGroups/devstudio365-webapi_group/providers/Microsoft.Web/sites/devstudio365-webapi/sitecontainers/webapi?api-version=2025-03-01" \
-            --body "{\"properties\":{\"image\":\"$WEBAPI_PREVIOUS\"}}"
+            --body "{\"properties\":{\"image\":\"$WEBAPI_PREVIOUS\",\"isMain\":true,\"targetPort\":\"8080\",\"authType\":\"UserAssigned\",\"userManagedIdentityClientId\":\"bfca0881-a405-4aee-b564-8b3bd55a32b4\",\"inheritAppSettingsAndConnectionStrings\":true}}"
 
       - name: Stop if webapi health check failed
         if: steps.health_webapi.outcome == 'failure'
