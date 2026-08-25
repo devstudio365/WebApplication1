@@ -29,6 +29,24 @@ resource stagingRg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
+// Read-only lookups of the staging apps' CURRENTLY deployed image tags.
+// The pipeline (build-and-push.yml) updates these directly on every merge,
+// completely outside Bicep. Without reading them here, redeploying this
+// Bicep file would reset staging back to a stale hardcoded placeholder,
+// undoing whatever the pipeline most recently deployed — exactly the
+// regression `what-if` caught. By reading and re-asserting the current
+// value instead of a fixed one, infrastructure changes never fight with
+// what the pipeline owns.
+resource webStagingExisting 'Microsoft.Web/sites@2022-03-01' existing = {
+  name: 'web-webapplication1-staging'
+  scope: stagingRg
+}
+
+resource webapiStagingExisting 'Microsoft.Web/sites@2022-03-01' existing = {
+  name: 'webapi-webapplication1-staging'
+  scope: stagingRg
+}
+
 // ---- Existing resources, referenced read-only so Bicep documents them ----
 // without risking any change to what's already live in production.
 
@@ -76,6 +94,8 @@ module staging 'modules/staging.bicep' = {
   params: {
     location: location
     acrLoginServer: acr.outputs.loginServer
+    currentWebLinuxFxVersion: webStagingExisting.properties.siteConfig.linuxFxVersion
+    currentWebapiLinuxFxVersion: webapiStagingExisting.properties.siteConfig.linuxFxVersion
   }
 }
 
@@ -99,6 +119,14 @@ module keyVault 'modules/keyvault.bicep' = {
   }
 }
 
+module productionAppInsights 'modules/production-appinsights.bicep' = {
+  name: 'production-app-insights'
+  scope: resourceGroup(productionResourceGroupName)
+  params: {
+    location: location
+  }
+}
+
 output acrLoginServer string = acr.outputs.loginServer
 output productionWebUrl string = production.outputs.defaultHostName
 output productionWebapiUrl string = webapi.outputs.defaultHostName
@@ -107,3 +135,4 @@ output stagingWebapiUrl string = staging.outputs.webapiStagingHostName
 output stagingDatabaseId string = sql.outputs.stagingDatabaseId
 output keyVaultName string = keyVault.outputs.vaultName
 output keyVaultUri string = keyVault.outputs.vaultUri
+output productionAppInsightsConnectionString string = productionAppInsights.outputs.connectionString
